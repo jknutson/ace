@@ -18,6 +18,9 @@ func init() {
 	flag.Parse()
 }
 
+// for example:
+// go run main.go -labelFilter IT-Dev-VSJohnKnutson,Common  # limited to 5 comme separated items
+
 func main() {
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -35,6 +38,8 @@ func main() {
 	}
 
 	any := "*"
+	// more info on label filters:
+	// https://learn.microsoft.com/en-us/azure/azure-app-configuration/concept-key-value#query-key-values
 	settingsPager := client.NewListSettingsPager(azappconfig.SettingSelector{
 		KeyFilter:   &any,
 		LabelFilter: &labelFilter,
