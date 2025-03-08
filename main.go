@@ -35,9 +35,11 @@ func main() {
 	}
 
 	any := "*"
-	settingsPager := client.NewListSettingsPager(
-		azappconfig.SettingSelector{KeyFilter: &any, LabelFilter: &labelFilter, Fields: azappconfig.AllSettingFields()}, nil,
-	)
+	settingsPager := client.NewListSettingsPager(azappconfig.SettingSelector{
+		KeyFilter:   &any,
+		LabelFilter: &labelFilter,
+		Fields:      azappconfig.AllSettingFields(),
+	}, nil)
 
 	for settingsPager.More() {
 		settingsPage, err := settingsPager.NextPage(context.TODO())
