@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azappconfig"
+	"github.com/google/uuid"
 )
 
 var labelFilter string
@@ -55,7 +57,19 @@ func main() {
 		}
 
 		for _, setting := range settingsPage.Settings {
-			fmt.Printf("%s=%s\n", *setting.Key, *setting.Value)
+
+			// need to handle multiline values differentely (with a heredoc)
+			if strings.Contains(*setting.Value, "\n") {
+				// TODO: use a guid for the heredoc
+				eof := uuid.New().String()
+				fmt.Printf("%s<<%s\n", *setting.Key, eof)
+				for line := range strings.Split(*setting.Value, "\n") {
+					fmt.Println(line)
+				}
+				fmt.Println(eof)
+			} else {
+				fmt.Printf("%s=%s\n", *setting.Key, *setting.Value)
+			}
 		}
 	}
 }
