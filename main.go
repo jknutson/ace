@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -14,9 +13,11 @@ import (
 )
 
 var labelFilter string
+var appconfigEndpoint string
 
 func init() {
 	flag.StringVar(&labelFilter, "labelFilter", "Common", "label to filter")
+	flag.StringVar(&appconfigEndpoint, "appconfigEndpoint", "", "App Configuration endpoint")
 	flag.Parse()
 }
 
@@ -26,13 +27,14 @@ func init() {
 func main() {
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		//  TODO: Update the following line with your application specific error handling logic
-		log.Fatalf("ERROR: %s", err)
+		log.Fatalf("ERROR: %s\n", err)
 	}
 
-	// APPCONFIGURATION_ENDPOINT=https://YOUR-APPCONFIG-appcs.azconfig.io
-	connectionEndpoint := os.Getenv("APPCONFIGURATION_ENDPOINT")
-	client, err := azappconfig.NewClient(connectionEndpoint, credential, nil)
+	if appconfigEndpoint == "" {
+		log.Fatalf("ERROR: APPCONFIGURATION_ENDPOINT is not set")
+	}
+
+	client, err := azappconfig.NewClient(appconfigEndpoint, credential, nil)
 
 	if err != nil {
 		//  TODO: Update the following line with your application specific error handling logic
