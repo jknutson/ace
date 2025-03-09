@@ -20,3 +20,5 @@ jobs:
         run: go test
       - name: go-build
         run: go build -v ./...
+      - name: ace-help
+        run: ace -h
