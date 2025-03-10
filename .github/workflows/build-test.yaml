@@ -21,4 +21,4 @@ jobs:
       - name: go-build
         run: go build -v ./...
       - name: ace-help
-        run: ace -h
+        run: ./ace -h
