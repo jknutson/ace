@@ -17,8 +17,8 @@ jobs:
       - name: go-vet
         run: go vet ./...
       - name: go-test
-        run: go test
+        run: go test ./...
       - name: go-build
-        run: go build -v ./...
+        run: go build -v -o bin/ace cmd/ace.go
       - name: ace-help
         run: ./ace -h
