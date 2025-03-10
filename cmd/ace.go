@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -12,38 +13,48 @@ import (
 	"github.com/google/uuid"
 )
 
-var labelFilter string
-var appconfigEndpoint string
+var labelFilter,
+	appconfigEndpoint string
 
 func init() {
-	flag.StringVar(&labelFilter, "labelFilter", "Common", "label to filter")
-	flag.StringVar(&appconfigEndpoint, "appconfigEndpoint", "", "App Configuration endpoint")
+	var defaultLabelFilter,
+		defaultAppconfigEndpoint string
+	var ok bool
+
+	// setup flag defaults from environment variables
+	defaultLabelFilter, ok = os.LookupEnv("ACE_LABEL_FILTER")
+	if !ok {
+		defaultLabelFilter = "Common"
+	}
+	defaultAppconfigEndpoint, ok = os.LookupEnv("ACE_APPCONFIG_ENDPOINT")
+	if !ok {
+		defaultAppconfigEndpoint = ""
+	}
+
+	flag.StringVar(&labelFilter, "labelFilter", defaultLabelFilter, "label to filter")
+	flag.StringVar(&appconfigEndpoint, "appconfigEndpoint", defaultAppconfigEndpoint, "App Configuration endpoint")
 	flag.Parse()
 }
-
-// for example:
-// go run main.go -labelFilter IT-Dev-VSJohnKnutson,Common  # limited to 5 comme separated items
 
 func main() {
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		log.Fatalf("ERROR: %s\n", err)
+		log.Fatalln("ERROR:", err)
 	}
 
+	const appConfigEndpointNotSetError = "appconfig endpoint must be set via `-appconfigEndpoint` flag, or the `ACE_APPCONFIG_ENDPOINT` environment variable."
 	if appconfigEndpoint == "" {
-		log.Fatalf("ERROR: APPCONFIGURATION_ENDPOINT is not set")
+		log.Fatalln("ERROR:", appConfigEndpointNotSetError)
 	}
 
 	client, err := azappconfig.NewClient(appconfigEndpoint, credential, nil)
-
 	if err != nil {
-		//  TODO: Update the following line with your application specific error handling logic
-		log.Fatalf("ERROR creating azappconfig.NewClient: %s", err)
+		log.Fatalln("ERROR creating azappconfig.NewClient:", err)
 	}
 
-	any := "*"
 	// more info on label filters:
 	// https://learn.microsoft.com/en-us/azure/azure-app-configuration/concept-key-value#query-key-values
+	any := "*"
 	settingsPager := client.NewListSettingsPager(azappconfig.SettingSelector{
 		KeyFilter:   &any,
 		LabelFilter: &labelFilter,
@@ -52,17 +63,13 @@ func main() {
 
 	for settingsPager.More() {
 		settingsPage, err := settingsPager.NextPage(context.TODO())
-
 		if err != nil {
-			//  TODO: Update the following line with your application specific error handling logic
-			log.Fatalf("ERROR getting settingsPager: %s", err)
+			log.Fatalln("ERROR getting settingsPager:", err)
 		}
 
 		for _, setting := range settingsPage.Settings {
-
-			// need to handle multiline values differentely (with a heredoc)
 			if strings.Contains(*setting.Value, "\n") {
-				// TODO: use a guid for the heredoc
+				// if value is multiline, use heredoc
 				eof := uuid.New().String()
 				fmt.Printf("%s<<%s\n", *setting.Key, eof)
 				for line := range strings.Split(*setting.Value, "\n") {
