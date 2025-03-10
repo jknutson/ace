@@ -28,7 +28,6 @@ func init() {
 	}
 	defaultAppconfigEndpoint, ok = os.LookupEnv("ACE_APPCONFIG_ENDPOINT")
 	if !ok {
-		//
 		defaultAppconfigEndpoint = ""
 	}
 
@@ -37,29 +36,25 @@ func init() {
 	flag.Parse()
 }
 
-// for example:
-// go run main.go -labelFilter IT-Dev-VSJohnKnutson,Common  # limited to 5 comme separated items
-
 func main() {
 	credential, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		log.Fatalf("ERROR: %s\n", err)
+		log.Fatalln("ERROR:", err)
 	}
 
-	const appConfigEndpointNotSetError = "appconfig endpoint must be set via `-appconfigEndpoint` flag," +
-		" or the `ACE_APPCONFIG_ENDPOINT` environment variable."
+	const appConfigEndpointNotSetError = "appconfig endpoint must be set via `-appconfigEndpoint` flag, or the `ACE_APPCONFIG_ENDPOINT` environment variable."
 	if appconfigEndpoint == "" {
 		log.Fatalln("ERROR:", appConfigEndpointNotSetError)
 	}
 
 	client, err := azappconfig.NewClient(appconfigEndpoint, credential, nil)
 	if err != nil {
-		log.Fatalf("ERROR creating azappconfig.NewClient: %s", err)
+		log.Fatalln("ERROR creating azappconfig.NewClient:", err)
 	}
 
-	any := "*"
 	// more info on label filters:
 	// https://learn.microsoft.com/en-us/azure/azure-app-configuration/concept-key-value#query-key-values
+	any := "*"
 	settingsPager := client.NewListSettingsPager(azappconfig.SettingSelector{
 		KeyFilter:   &any,
 		LabelFilter: &labelFilter,
@@ -69,7 +64,7 @@ func main() {
 	for settingsPager.More() {
 		settingsPage, err := settingsPager.NextPage(context.TODO())
 		if err != nil {
-			log.Fatalf("ERROR getting settingsPager: %s", err)
+			log.Fatalln("ERROR getting settingsPager:", err)
 		}
 
 		for _, setting := range settingsPage.Settings {
